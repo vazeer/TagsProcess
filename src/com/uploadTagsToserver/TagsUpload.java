@@ -20,7 +20,7 @@ public class TagsUpload {
 		JSONParser parser = new JSONParser();
 
 		String referenceData = Utils
-				.readFileDataToString("/home/vazeer/Desktop/TagCategories/categoryReferenceFile.json");
+				.readFileDataToString("/home/vazeer/Desktop/TagCategories/uploadable_final_tags.json");
 		JSONArray category = null;
 		try {
 			category = (JSONArray) parser.parse(referenceData);

@@ -97,8 +97,9 @@ public class ReadFiles {
 			while (line != null) {
 				sb.append(line);
 				// sb.append(System.lineSeparator());
-				line = br.readLine();
 				allLines.add(line);
+				line = br.readLine();
+				
 			}
 			everything = sb.toString();
 		} catch (FileNotFoundException e1) {
@@ -118,13 +119,26 @@ public class ReadFiles {
 		return allLines;
 	}
 
+	public static boolean isNumeric(String str) {
+		try {
+			double d = Double.parseDouble(str);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		return true;
+	}
+
 	public JSONObject parseFiles(ArrayList<String> files, String category) {
 		JSONObject obj = new JSONObject();
 		JSONArray array = new JSONArray();
 		Map<String, String> filterDuplicates = new HashMap<String, String>();
 
 		for (String path : files) {
+			if (path.contains("~")) {
+				continue;
+			}
 			System.out.println("Category: " + category + " Path:" + path);
+
 			String data = getData(path);
 			data = data.toString();
 			JSONParser parser = new JSONParser();
@@ -135,6 +149,37 @@ public class ReadFiles {
 					JSONObject tagobj = (JSONObject) arrayofWords.get(i);
 					String tag = (String) tagobj.get("Text");
 
+					if (tag == null) {
+						tag = (String) tagobj.get("Column 4");
+					}
+					if (tag == null) {
+						tag = (String) tagobj.get("Column");
+					}
+
+					if (tag == null)
+						tag = (String) tagobj.get("Word");
+
+					if (tag != null) {
+						String[] values = tag.split(" ");
+						for (String s : values) {
+							if (isNumeric(s)) {
+								// System.out.println("**********:"+tag);
+								tag = tag.replace(s, "");
+								// System.out.println("********** RESSSSS: "+
+								// tag);
+							}
+						}
+						if (tag.contains("₹") || tag.contains("%") ) {
+							System.err.println("Not using this tag: "+tag);
+							continue;
+						}
+						
+						if(tag.isEmpty())
+							continue;
+						
+						
+					}
+
 					String tagSubValue = (String) tagobj.get("SubText");
 
 					if (tagSubValue != null) {
@@ -143,27 +188,27 @@ public class ReadFiles {
 								.trim();
 					}
 
-					if (tag == null)
-						tag = (String) tagobj.get("Word");
-
 					tag = tag.replaceAll("\\(.*?\\)", "").trim();
 
-					if (tag != null && !tag.isEmpty()){
+					if (tag != null && !tag.isEmpty()) {
+
+						//convert first letter to upper case
+						tag = Character.toUpperCase(tag.charAt(0)) + tag.substring(1);
+					
 						
-						
-						if(tagSubValue==null)
-						{
-							if(tag.contains("Swimsuits"))
-							tagSubValue = "Swimsuits";
-							else if(tag.contains("Pants"))
-							tagSubValue = "Pants";
+						if (tagSubValue == null) {
+							if (tag.contains("Swimsuits"))
+								tagSubValue = "Swimsuits";
+							else if (tag.contains("Pants"))
+								tagSubValue = "Pants";
+							else if (tag.contains("Sarees"))
+								tagSubValue = "Saree";
 						}
-						
-						if(filterDuplicates.get(tag)==null)
-						filterDuplicates.put(tag, tagSubValue);
-						
-						
-						}
+
+						if (filterDuplicates.get(tag) == null)
+							filterDuplicates.put(tag, tagSubValue);
+
+					}
 
 					// System.out.println("@@@@@@@@@@@@@@@"+tag);
 

@@ -29,9 +29,9 @@ public class ReadCrawledData {
 
 		
 //		  info.parseAndWriteinFile(
-//		  "/home/vazeer/Desktop/ScrappersData/IndianData/myntra/myntra_products_2.jl"
+//		  "/home/vazeer/Desktop/TagProcess/USA/forever21/foreverUS_products.jl"
 //		  ,
-//		  "/home/vazeer/Desktop/ScrappersData/IndianData/myntra/myntra_content_2.txt"
+//		  "/home/vazeer/Desktop/TagProcess/USA/forever21/foreverUS_content.txt"
 //		  );
 		 
 
@@ -41,12 +41,13 @@ public class ReadCrawledData {
 
 		// divideIntoFiles("/home/vazeer/ScrappersData/IndianData/myntra/myntra_products.jl");
 	}
-
+	
+	
 	private static void runToCombine(GetInfo info) {
 		info.updateTags(
-				"/home/vazeer/Desktop/ScrappersData/IndianData/jabong/jabong_products.jl",
-				"/home/vazeer/Desktop/ScrappersData/IndianData/jabong/jabongTags_products.jl",
-				"jabong");
+				"/home/vazeer/Desktop/TagProcess/koovs/koovs_products.jl",
+				"/home/vazeer/Desktop/TagProcess/koovs/koovsTags_products.jl",
+				"koovs");
 	}
 
 	private static void divideIntoFiles(String filepath) {

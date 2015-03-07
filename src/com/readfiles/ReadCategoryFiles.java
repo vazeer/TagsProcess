@@ -20,7 +20,7 @@ public class ReadCategoryFiles {
 		readAllFiles("/home/vazeer/Desktop/TagCategories/categoryReferenceFile.json");
 
 		/** send sub cat value */
-		// tempClass(true);
+	//	 tempClass(false);
 
 	}
 
@@ -102,11 +102,11 @@ public class ReadCategoryFiles {
 
 	public static Map<String, String> getOrderedMap() {
 		Map<String, String> map = new LinkedHashMap<String, String>();
-		String[] orderedList = { "Apparel Provider", "Apparel Back Style",
+		String[] orderedList = { "Apparel Provider", "Apparel Back Style","Apparel Closure Type",
 				"Apparel Neckline", "Apparel HemLine", "Apparel Waistline",
-				"Apparel Sleeve Type", "Apparel Type", "Occasion",
-				"Apparel Brand", "Pattern", "Apparel Accents",
-				"Material", "Color", "Apparel Description" };
+				"Apparel Sleeve Type","Apparel Lining", "Apparel Type", "Occasion",
+				"Apparel Brand", "Pattern", "Apparel Accents", "Material",
+				"Color", "Apparel Description" };
 		File dir = new File(
 				"/home/vazeer/Desktop/TagCategories/TagCategoriesOnly/");
 		String[] dirs = dir.list();

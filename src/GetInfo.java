@@ -148,7 +148,11 @@ public class GetInfo {
 
 	@SuppressWarnings("unchecked")
 	public void organiseTags(String path, String referenceFilePath,
-			String shopname) {
+			String taggedPath, String shopname) {
+		
+		Map<String, String> tags_filters = readFilterTagsFromPygrams(taggedPath);
+		Map<String, String> tags_filtersReverse = readFilterTagsFromPygramsReverse(taggedPath);
+		
 		File tagsnotMatched = new File(path);
 		String dir = tagsnotMatched.getParent() + "/";
 		String droppedWordspath = dir + shopname + "_ref_dropped.txt";
@@ -362,18 +366,31 @@ public class GetInfo {
 								tag = tagObj8.tagRemaining;
 							}
 
+							// for gender
 							ArrayList<String> genderList = new ArrayList<String>();
 							for (String key : genderMap.keySet()) {
 								ArrayList<String> listValues = genderMap
 										.get(key);
 								genderList.addAll(listValues);
+
 							}
 
 							TagProces tagObj10 = processForList(genderList,
 									tag, "Gender", logs);
 							if (tagObj10 != null && tagObj10.list.size() > 0) {
 								// tagsorganised.add(tagObj1);
-								newOnlyTagsMatched.addAll(tagObj10.list);
+
+								ArrayList<String> lst = new ArrayList<String>();
+								for (String matchedGender : tagObj10.list) {
+									for (String key : genderMap.keySet()) {
+										if (genderMap.get(key).contains(
+												matchedGender)) {
+											lst.add(key);
+										}
+									}
+
+								}
+								newOnlyTagsMatched.addAll(lst);
 							}
 							if (tagObj10.tagRemaining.isEmpty()) {
 								continue;
@@ -394,15 +411,24 @@ public class GetInfo {
 					System.out.println("process result for: "
 							+ jsonAraay.toJSONString());
 
-					item.put("product_tags", newOnlyTagsMatched);
+					item.put("product_tags", jsonAraay);
+
+					Set<String> set = getUplodableTags(newOnlyTagsMatched,tags_filters,tags_filtersReverse);
+					JSONArray jsonAraayFinal = new JSONArray();
+					jsonAraayFinal.addAll(set);
+					item.put("product_tags_final", jsonAraayFinal);
 
 					uploadBW.write(item.toJSONString() + "\n");
 					comparisonBW.write("Product ID:" + item_id
 							+ " After Reference Run Tags count:"
 							+ jsonAraay.size() + " values:"
 							+ jsonAraay.toJSONString() + "\n");
-					// if ("SARE3GDMG9WS7APH".equalsIgnoreCase(item_id))
-					// System.exit(0);
+
+					comparisonBW.write("Product ID:" + item_id
+							+ " After Reference Run Tags count FINAL:"
+							+ jsonAraayFinal.size() + " values:"
+							+ jsonAraayFinal.toJSONString() + "\n\n");
+
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -426,6 +452,41 @@ public class GetInfo {
 				+ droppedWordspath + "\n" + comparisonPath + "\n"
 				+ datatoUpload);
 
+	}
+
+	private Set<String> getUplodableTags(Set<String> newOnlyTagsMatched,
+			Map<String, String> tags_filters,Map<String, String> tags_filtersReverse) {
+		
+
+		tags_filters.put("unisex", "Unisex");
+		tags_filters.put("juniour", "Juniours");
+		tags_filters.put("men", "Men");
+		tags_filters.put("boi", "Boys");
+		tags_filters.put("girl", "Girls");
+		tags_filters.put("women", "Women");
+
+	
+
+		Set<String> myList = new HashSet<String>();
+
+		for (String tag : newOnlyTagsMatched) {
+			String stemmed = tags_filtersReverse.get(tag);
+			if (stemmed == null) {
+				System.err.println("prepare for stemmed for this tag: " + tag);
+				System.exit(0);
+			} else {
+				String uplodable = tags_filters.get(stemmed);
+				if (uplodable != null) {
+					myList.add(uplodable);
+				} else {
+					System.err.println("No Value for this stemmed: " + stemmed);
+					System.exit(0);
+				}
+
+			}
+		}
+
+		return myList;
 	}
 
 	public void addTagsFromPygrams(String productsDataPath,
@@ -771,26 +832,71 @@ public class GetInfo {
 		return filter_List;
 	}
 
+	public Map<String, String> readFilterTagsFromPygramsReverse(String path) {
+		Map<String, String> filter_List = new HashMap<String, String>();
+		FileInputStream fstream = null;
+		BufferedReader br = null;
+		String strLine;
+		try {
+			fstream = new FileInputStream(path);
+			br = new BufferedReader(new InputStreamReader(fstream));
+			while ((strLine = br.readLine()) != null) {
+				// Print the content on the console
+				strLine = strLine.trim();
+				String[] brands = strLine.split("\\t");
+				if (brands.length >= 2) {
+					String key = brands[0];
+					String value = brands[1];
+
+					key = key.replace("\"", "");
+					value = value.replace("\"", "");
+
+					filter_List.put(value, key);
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return filter_List;
+	}
+
 	public void parseAndWriteinFile(String path, String writeAt) {
-
-		String everything = getParsedData(path);
-
-		ArrayList<String> list = new ArrayList<>();
-		JSONParser parser = new JSONParser();
 
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("id" + "               " + "Title"
 				+ "                Description \n");
+		JSONParser parser = new JSONParser();
 
+		BufferedReader br = null;
+		System.out.println(path);
 		try {
-			Object obj = parser.parse(everything);
+			br = new BufferedReader(new FileReader(path));
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
 
-			JSONArray array = (JSONArray) obj;
+			String line = null;
+			try {
+				line = br.readLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
-			System.out.println("&&&&&&&&&&&&&" + array.size());
+			while (line != null) {
+				line = line.toString();
 
-			for (int i = 0; i < array.size(); i++) {
-				JSONObject item = (JSONObject) array.get(i);
+				JSONObject item = (JSONObject) parser.parse(line);
 
 				JSONArray urltemp = (JSONArray) item.get("image_urls");
 
@@ -828,32 +934,16 @@ public class GetInfo {
 
 				buffer.append("\n");
 
-				list.add((String) urltemp.get(0));
-
+				line = br.readLine();
 			}
 
-			Utils.writeInFile(buffer.toString(), writeAt);
-			System.out.println("completed");
-			/*
-			 * String value = ""; for (String s : list) { if (value.isEmpty()) {
-			 * value = "'" + s + "'"; } else { value = value + "," + "'" + s +
-			 * "'"; } }
-			 */
-
-			/*
-			 * writeInFile(value,
-			 * "/home/vazeer/Desktop/ScrappersData/nordyImages.txt");
-			 * System.out.println("written images for html data"); //
-			 * System.out.println("for html: "+value);
-			 * writeInFile(list.toString(),
-			 * "/home/vazeer/Desktop/ScrappersData/nordyurlslist.txt");
-			 * 
-			 * System.out.println("written images for imageX data: " +
-			 * list.toString());
-			 */
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		Utils.writeInFile(buffer.toString(), writeAt);
+		System.out.println("completed");
+
 	}
 
 	public String getParsedData(String path) {
